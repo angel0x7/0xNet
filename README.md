@@ -4,15 +4,18 @@ Outil de premier diagnostic réseau en Go, pensé pour un professionnel réseau
 qui doit rapidement comprendre le contexte réseau d'une machine et localiser
 une panne, couche par couche selon le modèle OSI.
 
-**Compatible Linux et Windows**, sans dépendance externe obligatoire (pas de
-libpcap/cgo requis). Npcap est utilisé automatiquement s'il est détecté sous
-Windows, avec repli propre sinon.
+**Compatible Linux et Windows**, sans dépendance externe. Npcap est utilisé automatiquement s'il est détecté sous
+Windows, avec repli sinon.
 
 ## Build
 
 ```bash
+#linux
 go build -o 0xnetadmin .
-GOOS=windows GOARCH=amd64 go build -o 0xnetadmin.exe .
+#windows 64
+set GOOS=windows
+set GOARCH=amd64
+go build -o 0xnetadmin.exe
 ```
 
 ## Sous-commandes
@@ -34,8 +37,7 @@ GOOS=windows GOARCH=amd64 go build -o 0xnetadmin.exe .
 
 ```bash
 ./0xnetadmin sysinfo                        # affichage texte
-./0xnetadmin sysinfo -json                  # export JSON (stdout)
-./0xnetadmin sysinfo -json -out snap.json   # export JSON (fichier)
+./0xnetadmin sysinfo -json -out snap.json   # export JSON fichier
 ./0xnetadmin sysinfo -save avant.json       # snapshot de référence
 ./0xnetadmin sysinfo -diff avant.json       # diff avec l'état actuel
 ```
@@ -125,26 +127,15 @@ actif (Ethernet ou IP brut) et s'ouvre directement dans Wireshark/tcpdump.
 │   │   ├── ttl_linux.go               # réglage TTL socket (Linux)
 │   │   └── ttl_windows.go             # réglage TTL socket (Windows)
 │   ├── sysinfo/
-│   │   ├── sysinfo.go                 # types communs + Collect() (portable)
+│   │   ├── sysinfo.go                 # types communs + Collect() 
 │   │   ├── sysinfo_linux.go           # routes/DNS/ARP via /proc/net/*
 │   │   ├── sysinfo_windows.go         # routes/DNS/ARP via route print / ipconfig / arp -a
 │   │   └── diff.go                    # export JSON, Save/Load, Diff de snapshots
 │   ├── sniffer/
-│   │   ├── common.go                  # décodage L2-L7 + agrégation de flux (5-tuple)
+│   │   ├── common.go                  # décodage L2-L7 + agrégation de flux 
 │   │   ├── pcap.go                    # écriture de fichiers .pcap standard
 │   │   ├── sniffer_linux.go           # capture AF_PACKET
 │   │   ├── sniffer_windows.go         # capture Npcap ou repli SIO_RCVALL
 │   │   └── npcap_windows.go           # FFI wpcap.dll (chargement dynamique)
 │   └── diagnostics/diagnostics.go     # pipeline de tests L1->L7, export JSON
 ```
-
-## Limites connues / pistes restantes
-
-- Npcap : code écrit et compilé (cross-compilation Windows validée), mais
-  non exécuté faute d'environnement Windows+Npcap disponible pour ce
-  développement — à valider en conditions réelles avant usage critique.
-- Path MTU Discovery et traceroute utilisent ICMP : inefficaces si un
-  pare-feu bloque totalement l'ICMP sortant (le test bascule alors en
-  `SKIP` plutôt que de donner un faux résultat).
-- Agrégation de flux : uniquement en mémoire pour la durée de la capture
-  (pas de export flux au format NetFlow/IPFIX à ce stade).
