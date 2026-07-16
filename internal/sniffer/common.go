@@ -387,10 +387,10 @@ type FlowKey struct {
 
 // FlowStats agrège les compteurs d'un flux au fil de la capture.
 type FlowStats struct {
-	Packets  uint64
-	Bytes    uint64
-	First    time.Time
-	Last     time.Time
+	Packets uint64
+	Bytes   uint64
+	First   time.Time
+	Last    time.Time
 }
 
 // flowKeyFromPacket construit la clé de flux d'un paquet décodé, si
@@ -461,6 +461,15 @@ func printFlows(flows map[FlowKey]*FlowStats) {
 		dur := r.Last.Sub(r.First).Round(time.Millisecond)
 		fmt.Printf("%-6s %-21s %-21s %10d %10d %10s\n", r.Key.Proto, src, dst, r.Packets, r.Bytes, dur)
 	}
+}
+
+// CaptureDevice décrit un périphérique de capture bas niveau (Npcap sous
+// Windows). Sert uniquement à aider au choix de -i quand plusieurs
+// interfaces sont présentes ; sous Linux, les noms d'interface classiques
+// (eth0, wlan0...) suffisent et sont listés via `sysinfo`/`sniff -list`.
+type CaptureDevice struct {
+	Name        string
+	Description string
 }
 
 func printPacket(n uint64, p *Packet, verbose bool) {

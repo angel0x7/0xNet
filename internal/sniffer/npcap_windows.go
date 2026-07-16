@@ -73,6 +73,52 @@ func openNpcap(wantedIface string) (*npcapEngine, error) {
 	return &npcapEngine{handle: ret}, nil
 }
 
+// ListNpcapDevices énumère les périphériques de capture Npcap disponibles
+// (nom interne + description lisible), pour aider à choisir la bonne
+// interface avec -i quand plusieurs adaptateurs sont présents.
+func ListNpcapDevices() ([]NpcapDevice, error) {
+	if err := wpcapDLL.Load(); err != nil {
+		return nil, fmt.Errorf("wpcap.dll introuvable (Npcap non installé): %w", err)
+	}
+
+	var head uintptr
+	errbuf := make([]byte, 256)
+	ret, _, _ := procFindAllDevs.Call(
+		uintptr(unsafe.Pointer(&head)),
+		uintptr(unsafe.Pointer(&errbuf[0])),
+	)
+	if ret != 0 {
+		return nil, fmt.Errorf("pcap_findalldevs échoué: %s", cString(errbuf))
+	}
+	defer procFreeAllDevs.Call(head)
+
+	type pcapIfRaw struct {
+		next        uintptr
+		name        uintptr
+		description uintptr
+		addresses   uintptr
+		flags       uint32
+	}
+
+	var devices []NpcapDevice
+	for p := head; p != 0; {
+		raw := (*pcapIfRaw)(unsafe.Pointer(p))
+		devices = append(devices, NpcapDevice{
+			Name:        cStringAt(raw.name),
+			Description: cStringAt(raw.description),
+		})
+		p = raw.next
+	}
+	return devices, nil
+}
+
+// NpcapDevice décrit un périphérique de capture tel que retourné par
+// pcap_findalldevs.
+type NpcapDevice struct {
+	Name        string
+	Description string
+}
+
 // findNpcapDevice énumère les périphériques Npcap via pcap_findalldevs et
 // sélectionne celui correspondant à wantedIface (sous-chaîne, insensible à
 // la casse, testée sur le nom et la description), ou le premier disponible.
