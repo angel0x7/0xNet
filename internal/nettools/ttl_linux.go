@@ -4,7 +4,7 @@ package nettools
 
 import "syscall"
 
-// setTTL positionne le TTL IP sortant sur le socket brut, utilisé par le
+// setTTL positionne le TTL IP sortant sur le socket brut
 // traceroute pour forcer l'expiration à chaque saut.
 func setTTL(rc syscall.RawConn, ttl int) error {
 	var sockErr error
