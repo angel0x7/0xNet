@@ -105,6 +105,18 @@ sudo ./0xnetadmin sniff -i eth0 -flows -t 30s
 # export au format pcap standard, relisible dans Wireshark
 sudo ./0xnetadmin sniff -i eth0 -pcap capture.pcap -t 60s
 ```
+Pour Windows executer la cmd pour lister les interfaces 
+
+```bash
+Get-NetAdapter
+```
+
+```bash
+#windows 
+
+./0xnetadmin.exe sniff -i string InterfaceDescription
+```
+
 
 - **Linux** : capture Ethernet complète (AF_PACKET), ARP inclus.
 - **Windows** : capture Ethernet complète si **Npcap** est installé
